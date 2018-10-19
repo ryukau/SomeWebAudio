@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset=utf-8>
+  <title>WebAudioSnippets</title>
+
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="highlight/styles/idea.css">
+  <script src="highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <style>
+    body {
+      max-width: 704px;
+      margin: auto;
+      padding: 32px 8px;
+    }
+
+    kbd {
+      border-style: solid;
+      border-width: 1px 2px 2px 1px;
+      border-radius: 2px;
+      padding: 2px;
+      margin: 2px;
+    }
+
+    code.sourceCode {
+      border: 1px solid black;
+    }
+
+    footer {
+      border-top: 1px gray solid;
+      padding: 0.5em;
+      margin-top: 1em;
+    }
+
+    input[type="button"] {
+      background-color: #ffffff;
+      border: 2px solid #aaaaaa;
+      font-size: 16px;
+      height: 32px;
+    }
+
+    input[type="button"]:hover {
+      background-color: #ffffff;
+      border: 2px solid #aaccff;
+    }
+
+    div.numberInput {
+      display: block;
+      white-space: nowrap;
+    }
+
+    div.numberInput:hover {
+      background-color: #e0ecff;
+    }
+
+    .numberInputLabel {
+      /* max 12 letter  */
+      display: inline-block;
+      margin: 0 8px 0 8px;
+      text-align: left;
+      width: 80px;
+
+      font-size: 10pt;
+      font-family: 'Courier New', Courier, monospace;
+    }
+
+    .numberInputNumber {
+      display: inline-block;
+      width: 60px;
+    }
+
+    .numberInputRange {
+      display: inline-block;
+      width: 140px;
+    }
+
+    .pullDownMenu {
+      display: inline-block;
+      text-align: left;
+      width: 100%;
+    }
+
+    .pullDownMenu:hover {
+      background-color: #e0ecff;
+    }
+
+    select {
+      background-color: #ffffff;
+      border: 2px solid #aaaaaa;
+      height: 20px;
+      margin-top: 2px;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+
+    select:hover {
+      background-color: #ffffff;
+      border: 2px solid #aaccff;
+    }
+
+    .divControl {
+      display: inline-block;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+
+<body>
+  <h1 id="hello-webaudio">Hello WebAudio</h1>
+<p>サイン波を鳴らします。Firefox か Chrome なら <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>i</kbd> で<a href="https://developer.mozilla.org/ja/docs/Learn/Common_questions/What_are_browser_developer_tools">開発者ツール</a>を開いて、<a href="https://developer.mozilla.org/ja/docs/Tools/Web_Console">コンソール</a>に以下のコードをコピペすれば音が出ます。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">var</span> ctx <span class="op">=</span> <span class="kw">new</span> <span class="at">AudioContext</span>()</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">var</span> gain <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createGain</span>()</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="va">gain</span>.<span class="va">gain</span>.<span class="at">value</span> <span class="op">=</span> <span class="fl">0.1</span></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="va">gain</span>.<span class="at">connect</span>(<span class="va">ctx</span>.<span class="at">destination</span>)</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="kw">var</span> panner <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createStereoPanner</span>()</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="va">panner</span>.<span class="va">pan</span>.<span class="at">value</span> <span class="op">=</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="va">panner</span>.<span class="at">connect</span>(gain)</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb1-11" data-line-number="11"><span class="kw">var</span> lfo <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createOscillator</span>()</a>
+<a class="sourceLine" id="cb1-12" data-line-number="12"><span class="va">lfo</span>.<span class="va">type</span>.<span class="at">value</span> <span class="op">=</span> <span class="st">&quot;sine&quot;</span></a>
+<a class="sourceLine" id="cb1-13" data-line-number="13"><span class="va">lfo</span>.<span class="va">frequency</span>.<span class="at">value</span> <span class="op">=</span> <span class="fl">0.6</span></a>
+<a class="sourceLine" id="cb1-14" data-line-number="14"><span class="va">lfo</span>.<span class="va">detune</span>.<span class="at">value</span> <span class="op">=</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-15" data-line-number="15"><span class="va">lfo</span>.<span class="at">connect</span>(<span class="va">panner</span>.<span class="at">pan</span>)</a>
+<a class="sourceLine" id="cb1-16" data-line-number="16"><span class="va">lfo</span>.<span class="at">start</span>()</a>
+<a class="sourceLine" id="cb1-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb1-18" data-line-number="18"><span class="kw">var</span> osc <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createOscillator</span>()</a>
+<a class="sourceLine" id="cb1-19" data-line-number="19"><span class="va">osc</span>.<span class="va">type</span>.<span class="at">value</span> <span class="op">=</span> <span class="st">&quot;sine&quot;</span></a>
+<a class="sourceLine" id="cb1-20" data-line-number="20"><span class="va">osc</span>.<span class="va">frequency</span>.<span class="at">value</span> <span class="op">=</span> <span class="dv">600</span></a>
+<a class="sourceLine" id="cb1-21" data-line-number="21"><span class="va">osc</span>.<span class="va">detune</span>.<span class="at">value</span> <span class="op">=</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-22" data-line-number="22"><span class="va">osc</span>.<span class="at">connect</span>(panner)</a>
+<a class="sourceLine" id="cb1-23" data-line-number="23"><span class="va">osc</span>.<span class="at">start</span>()</a></code></pre></div>
+<p>このサイン波を鳴らすコードでは、次のように<a href="https://webaudio.github.io/web-audio-api/">ノード</a>を繋いでいます。</p>
+<figure>
+<img src="00_osc_example.svg" alt="Image of an audio graph." style="width: 480px; padding-bottom: 12px;"/>
+</figure>
+<p>WebAudioのAPIは <a href="https://webaudio.github.io/web-audio-api/#AudioContext"><code>AudioContext</code></a> から使うことができます。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">var</span> ctx <span class="op">=</span> <span class="kw">new</span> <span class="at">AudioContext</span>()</a></code></pre></div>
+<p><code>ctx.createSomeNode()</code> という関数で何らかのノードを作って <a href="https://webaudio.github.io/web-audio-api/#dom-audionode-connect"><code>someNode.connect(anotherNode)</code></a> で出力を別のノードに接続できます。</p>
+<p>ノードの接続先には <a href="https://webaudio.github.io/web-audio-api/#AudioParam"><code>AudioParam</code></a> として定義されているパラメータも指定できます。先のコードでは <code>lfo.connect(panner.pan)</code> の部分が該当します。</p>
+<p><code>ctx.destination</code> は <a href="https://webaudio.github.io/web-audio-api/#AudioDestinationNode"><code>AudioDestinationNode</code></a> を表しています。 <code>AudioDestinationNode</code> はWebAudioで作られた音が最後にたどり着く場所です。ミキサのマスタチャンネルのようなものですがゲインやパンのコントロールはありません。ゲインは <a href="https://webaudio.github.io/web-audio-api/#gainnode"><code>GainNode</code></a> 、パンはステレオに振るだけなら <a href="https://webaudio.github.io/web-audio-api/#stereopannernode"><code>StereoPannerNode</code></a> が使えます。</p>
+<ul>
+<li><a href="https://webaudio.github.io/web-audio-api/#AudioContext">AudioContext</a></li>
+<li><a href="https://webaudio.github.io/web-audio-api/#AudioDestinationNode">AudioDestinationNode</a></li>
+<li><a href="https://webaudio.github.io/web-audio-api/#AudioParam">AudioParam</a></li>
+<li><a href="https://webaudio.github.io/web-audio-api/#oscillatornode">OscillatorNode</a></li>
+<li><a href="https://webaudio.github.io/web-audio-api/#gainnode">GainNode</a></li>
+<li><a href="https://webaudio.github.io/web-audio-api/#stereopannernode">StereoPannerNode</a></li>
+</ul>
+
+
+  <footer>
+    <a href="index.html">トップに戻る</a>
+  </footer>
+</body>
+
+</html>

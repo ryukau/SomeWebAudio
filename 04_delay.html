@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset=utf-8>
+  <title>WebAudioSnippets</title>
+
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="highlight/styles/idea.css">
+  <script src="highlight/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <style>
+    body {
+      max-width: 704px;
+      margin: auto;
+      padding: 32px 8px;
+    }
+
+    kbd {
+      border-style: solid;
+      border-width: 1px 2px 2px 1px;
+      border-radius: 2px;
+      padding: 2px;
+      margin: 2px;
+    }
+
+    code.sourceCode {
+      border: 1px solid black;
+    }
+
+    footer {
+      border-top: 1px gray solid;
+      padding: 0.5em;
+      margin-top: 1em;
+    }
+
+    input[type="button"] {
+      background-color: #ffffff;
+      border: 2px solid #aaaaaa;
+      font-size: 16px;
+      height: 32px;
+    }
+
+    input[type="button"]:hover {
+      background-color: #ffffff;
+      border: 2px solid #aaccff;
+    }
+
+    div.numberInput {
+      display: block;
+      white-space: nowrap;
+    }
+
+    div.numberInput:hover {
+      background-color: #e0ecff;
+    }
+
+    .numberInputLabel {
+      /* max 12 letter  */
+      display: inline-block;
+      margin: 0 8px 0 8px;
+      text-align: left;
+      width: 80px;
+
+      font-size: 10pt;
+      font-family: 'Courier New', Courier, monospace;
+    }
+
+    .numberInputNumber {
+      display: inline-block;
+      width: 60px;
+    }
+
+    .numberInputRange {
+      display: inline-block;
+      width: 140px;
+    }
+
+    .pullDownMenu {
+      display: inline-block;
+      text-align: left;
+      width: 100%;
+    }
+
+    .pullDownMenu:hover {
+      background-color: #e0ecff;
+    }
+
+    select {
+      background-color: #ffffff;
+      border: 2px solid #aaaaaa;
+      height: 20px;
+      margin-top: 2px;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+
+    select:hover {
+      background-color: #ffffff;
+      border: 2px solid #aaccff;
+    }
+
+    .divControl {
+      display: inline-block;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+
+<body>
+  <h1 id="ディレイ">ディレイ</h1>
+<p><a href="https://webaudio.github.io/web-audio-api/#DelayNode"><code>DelayNode</code></a> を使います。</p>
+<h2 id="注意">注意</h2>
+<p>このページのデモは発散する可能性があります。 Firefox 62.0.3 ではKarplus-StrongとFreeverbのデモが発散するのでPlayしないでください。</p>
+<p>発散したときは、ページをリロードするか、近くにある Panic ボタンを押してください。</p>
+<p>念のために音量を小さくしておくことを推奨します。</p>
+<h2 id="準備">準備</h2>
+<p>このページのコードを上から順に開発者ツールのコンソールにコピペしていけば実行できるようになっています。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">function</span> <span class="at">toAudioBuffer</span>(ctx<span class="op">,</span> wave) <span class="op">{</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">  <span class="kw">var</span> channel <span class="op">=</span> <span class="va">wave</span>.<span class="at">length</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">  <span class="kw">var</span> frame <span class="op">=</span> wave[<span class="dv">0</span>].<span class="at">length</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">  <span class="kw">var</span> buffer <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createBuffer</span>(channel<span class="op">,</span> frame<span class="op">,</span> <span class="va">ctx</span>.<span class="at">sampleRate</span>)</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">  <span class="cf">for</span> (<span class="kw">var</span> ch <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> ch <span class="op">&lt;</span> channel<span class="op">;</span> <span class="op">++</span>ch) <span class="op">{</span></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">    <span class="va">buffer</span>.<span class="at">copyToChannel</span>(<span class="kw">new</span> <span class="at">Float32Array</span>(wave[ch])<span class="op">,</span> ch<span class="op">,</span> <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">  <span class="op">}</span></a>
+<a class="sourceLine" id="cb1-8" data-line-number="8">  <span class="cf">return</span> buffer</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="op">}</span></a>
+<a class="sourceLine" id="cb1-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb1-11" data-line-number="11"><span class="kw">function</span> <span class="at">renderImpulse</span>(ctx<span class="op">,</span> channel<span class="op">,</span> frame) <span class="op">{</span></a>
+<a class="sourceLine" id="cb1-12" data-line-number="12">  <span class="kw">var</span> wave <span class="op">=</span> <span class="kw">new</span> <span class="at">Array</span>(channel)</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13">  <span class="cf">for</span> (<span class="kw">var</span> ch <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> ch <span class="op">&lt;</span> channel<span class="op">;</span> <span class="op">++</span>ch) <span class="op">{</span></a>
+<a class="sourceLine" id="cb1-14" data-line-number="14">    wave[ch] <span class="op">=</span> <span class="kw">new</span> <span class="at">Array</span>(frame)</a>
+<a class="sourceLine" id="cb1-15" data-line-number="15">    <span class="kw">var</span> frame_sub_1 <span class="op">=</span> frame <span class="op">-</span> <span class="dv">1</span></a>
+<a class="sourceLine" id="cb1-16" data-line-number="16">    <span class="cf">for</span> (<span class="kw">var</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> frame<span class="op">;</span> <span class="op">++</span>i) <span class="op">{</span></a>
+<a class="sourceLine" id="cb1-17" data-line-number="17">      wave[ch][i] <span class="op">=</span> <span class="fl">0.1</span> <span class="op">*</span> (frame_sub_1 <span class="op">-</span> i) / frame <span class="op">*</span> <span class="va">Math</span>.<span class="at">random</span>()</a>
+<a class="sourceLine" id="cb1-18" data-line-number="18">    <span class="op">}</span></a>
+<a class="sourceLine" id="cb1-19" data-line-number="19">  <span class="op">}</span></a>
+<a class="sourceLine" id="cb1-20" data-line-number="20">  <span class="cf">return</span> <span class="at">toAudioBuffer</span>(ctx<span class="op">,</span> wave)</a>
+<a class="sourceLine" id="cb1-21" data-line-number="21"><span class="op">}</span></a>
+<a class="sourceLine" id="cb1-22" data-line-number="22"></a>
+<a class="sourceLine" id="cb1-23" data-line-number="23"><span class="kw">function</span> <span class="at">renderPing</span>(ctx<span class="op">,</span> channel<span class="op">,</span> frame) <span class="op">{</span></a>
+<a class="sourceLine" id="cb1-24" data-line-number="24">  <span class="kw">var</span> wave <span class="op">=</span> <span class="kw">new</span> <span class="at">Array</span>(channel)</a>
+<a class="sourceLine" id="cb1-25" data-line-number="25">  <span class="cf">for</span> (<span class="kw">var</span> ch <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> ch <span class="op">&lt;</span> channel<span class="op">;</span> <span class="op">++</span>ch) <span class="op">{</span></a>
+<a class="sourceLine" id="cb1-26" data-line-number="26">    wave[ch] <span class="op">=</span> <span class="kw">new</span> <span class="at">Array</span>(frame)</a>
+<a class="sourceLine" id="cb1-27" data-line-number="27">    <span class="kw">var</span> two_pi_per_fs <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> <span class="va">Math</span>.<span class="at">PI</span> / <span class="va">ctx</span>.<span class="at">sampleRate</span></a>
+<a class="sourceLine" id="cb1-28" data-line-number="28"></a>
+<a class="sourceLine" id="cb1-29" data-line-number="29">    wave[ch][<span class="dv">0</span>] <span class="op">=</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-30" data-line-number="30">    <span class="cf">for</span> (<span class="kw">var</span> i <span class="op">=</span> <span class="dv">1</span><span class="op">;</span> i <span class="op">&lt;</span> wave[ch].<span class="at">length</span><span class="op">;</span> <span class="op">++</span>i) <span class="op">{</span></a>
+<a class="sourceLine" id="cb1-31" data-line-number="31">      <span class="kw">var</span> decay <span class="op">=</span> (frame <span class="op">-</span> i <span class="op">-</span> <span class="dv">1</span>) / frame</a>
+<a class="sourceLine" id="cb1-32" data-line-number="32">      wave[ch][i] <span class="op">=</span> <span class="fl">0.2</span> <span class="op">*</span> decay <span class="op">*</span> decay</a>
+<a class="sourceLine" id="cb1-33" data-line-number="33">        <span class="op">*</span> <span class="va">Math</span>.<span class="at">sin</span>(i <span class="op">*</span> two_pi_per_fs</a>
+<a class="sourceLine" id="cb1-34" data-line-number="34">          <span class="op">*</span> (<span class="dv">1000</span> <span class="op">+</span> <span class="dv">8</span> <span class="op">*</span> wave[ch][i <span class="op">-</span> <span class="dv">1</span>])</a>
+<a class="sourceLine" id="cb1-35" data-line-number="35">          <span class="op">+</span> <span class="fl">0.1</span> <span class="op">*</span> <span class="va">Math</span>.<span class="at">random</span>())</a>
+<a class="sourceLine" id="cb1-36" data-line-number="36">    <span class="op">}</span></a>
+<a class="sourceLine" id="cb1-37" data-line-number="37">  <span class="op">}</span></a>
+<a class="sourceLine" id="cb1-38" data-line-number="38">  <span class="cf">return</span> <span class="at">toAudioBuffer</span>(ctx<span class="op">,</span> wave)</a>
+<a class="sourceLine" id="cb1-39" data-line-number="39"><span class="op">}</span></a>
+<a class="sourceLine" id="cb1-40" data-line-number="40"></a>
+<a class="sourceLine" id="cb1-41" data-line-number="41"><span class="kw">function</span> <span class="at">createBiquadFilter</span>(ctx<span class="op">,</span> type<span class="op">,</span> frequency<span class="op">,</span> Q<span class="op">,</span> gain <span class="op">=</span> <span class="dv">0</span>) <span class="op">{</span></a>
+<a class="sourceLine" id="cb1-42" data-line-number="42">  <span class="kw">var</span> filter <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createBiquadFilter</span>()</a>
+<a class="sourceLine" id="cb1-43" data-line-number="43">  <span class="va">filter</span>.<span class="at">type</span> <span class="op">=</span> type</a>
+<a class="sourceLine" id="cb1-44" data-line-number="44">  <span class="va">filter</span>.<span class="va">frequency</span>.<span class="at">value</span> <span class="op">=</span> frequency</a>
+<a class="sourceLine" id="cb1-45" data-line-number="45">  <span class="va">filter</span>.<span class="va">Q</span>.<span class="at">value</span> <span class="op">=</span> Q</a>
+<a class="sourceLine" id="cb1-46" data-line-number="46">  <span class="va">filter</span>.<span class="va">gain</span>.<span class="at">value</span> <span class="op">=</span> gain</a>
+<a class="sourceLine" id="cb1-47" data-line-number="47">  <span class="cf">return</span> filter</a>
+<a class="sourceLine" id="cb1-48" data-line-number="48"><span class="op">}</span></a>
+<a class="sourceLine" id="cb1-49" data-line-number="49"></a>
+<a class="sourceLine" id="cb1-50" data-line-number="50"><span class="kw">function</span> <span class="at">createGain</span>(ctx<span class="op">,</span> gain) <span class="op">{</span></a>
+<a class="sourceLine" id="cb1-51" data-line-number="51">  <span class="kw">var</span> gainNode <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createGain</span>()</a>
+<a class="sourceLine" id="cb1-52" data-line-number="52">  <span class="va">gainNode</span>.<span class="va">gain</span>.<span class="at">value</span> <span class="op">=</span> gain</a>
+<a class="sourceLine" id="cb1-53" data-line-number="53">  <span class="cf">return</span> gainNode</a>
+<a class="sourceLine" id="cb1-54" data-line-number="54"><span class="op">}</span></a>
+<a class="sourceLine" id="cb1-55" data-line-number="55"></a>
+<a class="sourceLine" id="cb1-56" data-line-number="56"><span class="kw">function</span> <span class="at">createDelay</span>(ctx<span class="op">,</span> time<span class="op">,</span> maxTime) <span class="op">{</span></a>
+<a class="sourceLine" id="cb1-57" data-line-number="57">  <span class="kw">var</span> delay <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createDelay</span>(maxTime)</a>
+<a class="sourceLine" id="cb1-58" data-line-number="58">  <span class="va">delay</span>.<span class="va">delayTime</span>.<span class="at">value</span> <span class="op">=</span> time</a>
+<a class="sourceLine" id="cb1-59" data-line-number="59">  <span class="cf">return</span> delay</a>
+<a class="sourceLine" id="cb1-60" data-line-number="60"><span class="op">}</span></a>
+<a class="sourceLine" id="cb1-61" data-line-number="61"></a>
+<a class="sourceLine" id="cb1-62" data-line-number="62"><span class="kw">function</span> <span class="at">createStereoPanner</span>(ctx<span class="op">,</span> pan) <span class="op">{</span></a>
+<a class="sourceLine" id="cb1-63" data-line-number="63">  <span class="kw">var</span> panner <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createStereoPanner</span>()</a>
+<a class="sourceLine" id="cb1-64" data-line-number="64">  <span class="va">panner</span>.<span class="va">pan</span>.<span class="at">value</span> <span class="op">=</span> pan</a>
+<a class="sourceLine" id="cb1-65" data-line-number="65">  <span class="cf">return</span> panner</a>
+<a class="sourceLine" id="cb1-66" data-line-number="66"><span class="op">}</span></a>
+<a class="sourceLine" id="cb1-67" data-line-number="67"></a>
+<a class="sourceLine" id="cb1-68" data-line-number="68"><span class="kw">var</span> ctx <span class="op">=</span> <span class="kw">new</span> <span class="at">AudioContext</span>()</a>
+<a class="sourceLine" id="cb1-69" data-line-number="69"><span class="kw">var</span> source</a></code></pre></div>
+<h2 id="フィードバックコムフィルタ">フィードバックコムフィルタ</h2>
+<p>まずはディレイにフィードバックをつけて図のような<a href="https://ccrma.stanford.edu/~jos/pasp/Feedback_Comb_Filters.html">フィードバックコムフィルタ</a>を作ります。</p>
+<figure>
+<img src="04_feedback_comb_filter.svg" alt="Image of feedback comb filter routing graph." style="width: 480px; padding-bottom: 12px;"/>
+</figure>
+<div class="sourceCode" id="cb2"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">function</span> <span class="at">createKarplusStrongFilter</span>(ctx<span class="op">,</span> pitch<span class="op">,</span> cutoff) <span class="op">{</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">  <span class="co">// 1 / freq のとき Karplus-Strong のピッチがずれる。</span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">  <span class="co">// 適当な定数 60 / ctx.sampleRate を足してピッチを合わせた。</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">  <span class="kw">var</span> delay <span class="op">=</span> <span class="at">createDelay</span>(ctx<span class="op">,</span> <span class="dv">1</span> / pitch <span class="op">+</span> <span class="dv">60</span> / <span class="va">ctx</span>.<span class="at">sampleRate</span><span class="op">,</span> <span class="dv">4</span>)</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">  <span class="kw">var</span> filter <span class="op">=</span> <span class="at">createBiquadFilter</span>(ctx<span class="op">,</span> <span class="st">&quot;lowpass&quot;</span><span class="op">,</span> cutoff<span class="op">,</span> <span class="dv">-3</span><span class="op">,</span> <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">  <span class="kw">var</span> gain <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> <span class="fl">0.99</span>)</a>
+<a class="sourceLine" id="cb2-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb2-8" data-line-number="8">  <span class="kw">var</span> input <span class="op">=</span> gain</a>
+<a class="sourceLine" id="cb2-9" data-line-number="9">  <span class="kw">var</span> output <span class="op">=</span> gain</a>
+<a class="sourceLine" id="cb2-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb2-11" data-line-number="11">  <span class="va">delay</span>.<span class="at">connect</span>(filter)</a>
+<a class="sourceLine" id="cb2-12" data-line-number="12">  <span class="va">filter</span>.<span class="at">connect</span>(gain)</a>
+<a class="sourceLine" id="cb2-13" data-line-number="13">  <span class="va">gain</span>.<span class="at">connect</span>(delay)</a>
+<a class="sourceLine" id="cb2-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb2-15" data-line-number="15">  <span class="cf">return</span> <span class="op">{</span> input<span class="op">,</span> output<span class="op">,</span> delay<span class="op">,</span> filter<span class="op">,</span> gain <span class="op">}</span></a>
+<a class="sourceLine" id="cb2-16" data-line-number="16"><span class="op">}</span></a>
+<a class="sourceLine" id="cb2-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb2-18" data-line-number="18"><span class="kw">var</span> bufferPing <span class="op">=</span> <span class="at">renderPing</span>(ctx<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="va">Math</span>.<span class="at">floor</span>(<span class="va">ctx</span>.<span class="at">sampleRate</span> / <span class="dv">5</span>))</a>
+<a class="sourceLine" id="cb2-19" data-line-number="19"><span class="kw">var</span> comb <span class="op">=</span> <span class="at">craeteCombFilter</span>(ctx<span class="op">,</span> <span class="fl">0.15</span><span class="op">,</span> <span class="fl">0.9</span>)</a>
+<a class="sourceLine" id="cb2-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb2-21" data-line-number="21">source <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createBufferSource</span>()</a>
+<a class="sourceLine" id="cb2-22" data-line-number="22"><span class="va">source</span>.<span class="at">buffer</span> <span class="op">=</span> bufferPing</a>
+<a class="sourceLine" id="cb2-23" data-line-number="23"><span class="va">source</span>.<span class="at">connect</span>(<span class="va">comb</span>.<span class="at">input</span>)</a>
+<a class="sourceLine" id="cb2-24" data-line-number="24"><span class="va">comb</span>.<span class="va">output</span>.<span class="at">connect</span>(<span class="va">ctx</span>.<span class="at">destination</span>)</a>
+<a class="sourceLine" id="cb2-25" data-line-number="25"><span class="va">source</span>.<span class="at">start</span>()</a></code></pre></div>
+<p>コメントにあるように <code>DelayNode</code> に指定した以上のディレイが加わって</p>
+<p>フィードバックコムフィルタのデモです。Panicボタンを押すと音が止まります。</p>
+<div id="divComb">
+
+</div>
+<h2 id="ピンポンディレイ">ピンポンディレイ</h2>
+<p>ピンポンディレイを作ります。</p>
+<figure>
+<img src="04_ping_pong_delay.svg" alt="Image of feedback comb filter routing graph." style="width: 640px; padding-bottom: 12px;"/>
+</figure>
+<div class="sourceCode" id="cb3"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">function</span> <span class="at">createPingPongDelay</span>(ctx<span class="op">,</span> time<span class="op">,</span> feedback<span class="op">,</span> pan) <span class="op">{</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">  <span class="kw">var</span> delayL <span class="op">=</span> <span class="at">createDelay</span>(ctx<span class="op">,</span> time<span class="op">,</span> <span class="dv">4</span>)</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">  <span class="kw">var</span> gainL <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> feedback)</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">  <span class="kw">var</span> pannerL <span class="op">=</span> <span class="at">createStereoPanner</span>(ctx<span class="op">,</span> pan)</a>
+<a class="sourceLine" id="cb3-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">  <span class="kw">var</span> delayR <span class="op">=</span> <span class="at">createDelay</span>(ctx<span class="op">,</span> time<span class="op">,</span> <span class="dv">4</span>)</a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">  <span class="kw">var</span> gainR <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> feedback)</a>
+<a class="sourceLine" id="cb3-8" data-line-number="8">  <span class="kw">var</span> pannerR <span class="op">=</span> <span class="at">createStereoPanner</span>(ctx<span class="op">,</span> <span class="op">-</span>pan)</a>
+<a class="sourceLine" id="cb3-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb3-10" data-line-number="10">  <span class="kw">var</span> input <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb3-11" data-line-number="11">  <span class="kw">var</span> output <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb3-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb3-13" data-line-number="13">  <span class="va">input</span>.<span class="at">connect</span>(delayL)</a>
+<a class="sourceLine" id="cb3-14" data-line-number="14">  <span class="va">input</span>.<span class="at">connect</span>(output)</a>
+<a class="sourceLine" id="cb3-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb3-16" data-line-number="16">  <span class="va">delayL</span>.<span class="at">connect</span>(gainL)</a>
+<a class="sourceLine" id="cb3-17" data-line-number="17">  <span class="va">gainL</span>.<span class="at">connect</span>(pannerL)</a>
+<a class="sourceLine" id="cb3-18" data-line-number="18">  <span class="va">pannerL</span>.<span class="at">connect</span>(delayR)</a>
+<a class="sourceLine" id="cb3-19" data-line-number="19">  <span class="va">delayR</span>.<span class="at">connect</span>(gainR)</a>
+<a class="sourceLine" id="cb3-20" data-line-number="20">  <span class="va">gainR</span>.<span class="at">connect</span>(pannerR)</a>
+<a class="sourceLine" id="cb3-21" data-line-number="21">  <span class="va">pannerR</span>.<span class="at">connect</span>(delayL)</a>
+<a class="sourceLine" id="cb3-22" data-line-number="22"></a>
+<a class="sourceLine" id="cb3-23" data-line-number="23">  <span class="va">pannerL</span>.<span class="at">connect</span>(output)</a>
+<a class="sourceLine" id="cb3-24" data-line-number="24">  <span class="va">pannerR</span>.<span class="at">connect</span>(output)</a>
+<a class="sourceLine" id="cb3-25" data-line-number="25"></a>
+<a class="sourceLine" id="cb3-26" data-line-number="26">  <span class="cf">return</span> <span class="op">{</span> input<span class="op">,</span> output<span class="op">,</span> delayL<span class="op">,</span> gainL<span class="op">,</span> pannerL<span class="op">,</span> delayR<span class="op">,</span> gainR<span class="op">,</span> pannerR <span class="op">}</span></a>
+<a class="sourceLine" id="cb3-27" data-line-number="27"><span class="op">}</span></a>
+<a class="sourceLine" id="cb3-28" data-line-number="28"></a>
+<a class="sourceLine" id="cb3-29" data-line-number="29"><span class="kw">var</span> pingpong <span class="op">=</span> <span class="at">createPingPongDelay</span>(ctx<span class="op">,</span> <span class="fl">0.43</span><span class="op">,</span> <span class="fl">0.5</span><span class="op">,</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb3-30" data-line-number="30"></a>
+<a class="sourceLine" id="cb3-31" data-line-number="31">source <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createBufferSource</span>()</a>
+<a class="sourceLine" id="cb3-32" data-line-number="32"><span class="va">source</span>.<span class="at">buffer</span> <span class="op">=</span> bufferPing</a>
+<a class="sourceLine" id="cb3-33" data-line-number="33"><span class="va">source</span>.<span class="at">connect</span>(<span class="va">pingpong</span>.<span class="at">input</span>)</a>
+<a class="sourceLine" id="cb3-34" data-line-number="34"><span class="va">pingpong</span>.<span class="va">output</span>.<span class="at">connect</span>(<span class="va">ctx</span>.<span class="at">destination</span>)</a>
+<a class="sourceLine" id="cb3-35" data-line-number="35"><span class="va">source</span>.<span class="at">start</span>()</a></code></pre></div>
+<p>ピンポンディレイのデモです。Panicボタンを押すと音が止まります。</p>
+<div id="divPingPong">
+
+</div>
+<h2 id="karplus-strongアルゴリズム">Karplus-Strongアルゴリズム</h2>
+<p><a href="https://ccrma.stanford.edu/~jos/pasp/Karplus_Strong_Algorithm.html">Karplus-Strongアルゴリズム</a>はフィードバックコムフィルタのフィードバックにローパスフィルタを加えることでギターなどの撥弦楽器のような音を出すアルゴリズムです。</p>
+<p>ここではKarplus-Strongを少し変形した次の図のようなルーティングを実装します。</p>
+<figure>
+<img src="04_karplus_strong.svg" alt="Image of Karplus-Strong routing graph." style="width: 480px; padding-bottom: 12px;"/>
+</figure>
+<p>input は適当な入力信号です。ここでは撥弦楽器のような音になるよう <code>Math.random()</code> で生成した短いノイズを使っていますが、オシレータの出力などを入れてもいいです。</p>
+<p>コードです。</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">function</span> <span class="at">renderNoiseBurst</span>(ctx<span class="op">,</span> channel<span class="op">,</span> frame) <span class="op">{</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">  <span class="kw">var</span> wave <span class="op">=</span> <span class="kw">new</span> <span class="at">Array</span>(channel)</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  <span class="cf">for</span> (<span class="kw">var</span> ch <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> ch <span class="op">&lt;</span> channel<span class="op">;</span> <span class="op">++</span>ch) <span class="op">{</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">    wave[ch] <span class="op">=</span> <span class="kw">new</span> <span class="at">Array</span>(frame)</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">    <span class="kw">var</span> frame_sub_1 <span class="op">=</span> frame <span class="op">-</span> <span class="dv">1</span></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">    <span class="cf">for</span> (<span class="kw">var</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> frame<span class="op">;</span> <span class="op">++</span>i) <span class="op">{</span></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">      wave[ch][i] <span class="op">=</span> <span class="fl">0.1</span> <span class="op">*</span> (frame_sub_1 <span class="op">-</span> i) / frame <span class="op">*</span> <span class="va">Math</span>.<span class="at">random</span>()</a>
+<a class="sourceLine" id="cb4-8" data-line-number="8">    <span class="op">}</span></a>
+<a class="sourceLine" id="cb4-9" data-line-number="9">  <span class="op">}</span></a>
+<a class="sourceLine" id="cb4-10" data-line-number="10">  <span class="cf">return</span> <span class="at">toAudioBuffer</span>(ctx<span class="op">,</span> wave)</a>
+<a class="sourceLine" id="cb4-11" data-line-number="11"><span class="op">}</span></a>
+<a class="sourceLine" id="cb4-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb4-13" data-line-number="13"><span class="kw">function</span> <span class="at">createKarplusStrongFilter</span>(ctx<span class="op">,</span> pitch<span class="op">,</span> cutoff) <span class="op">{</span></a>
+<a class="sourceLine" id="cb4-14" data-line-number="14">  <span class="kw">var</span> delay <span class="op">=</span> <span class="at">createDelay</span>(ctx<span class="op">,</span> <span class="dv">1</span> / pitch<span class="op">,</span> <span class="dv">4</span>)</a>
+<a class="sourceLine" id="cb4-15" data-line-number="15">  <span class="kw">var</span> filter <span class="op">=</span> <span class="at">createBiquadFilter</span>(ctx<span class="op">,</span> <span class="st">&quot;lowpass&quot;</span><span class="op">,</span> cutoff<span class="op">,</span> <span class="dv">-3</span><span class="op">,</span> <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb4-16" data-line-number="16">  <span class="kw">var</span> gain <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> <span class="fl">0.99</span>)</a>
+<a class="sourceLine" id="cb4-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb4-18" data-line-number="18">  <span class="kw">var</span> input <span class="op">=</span> gain</a>
+<a class="sourceLine" id="cb4-19" data-line-number="19">  <span class="kw">var</span> output <span class="op">=</span> gain</a>
+<a class="sourceLine" id="cb4-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb4-21" data-line-number="21">  <span class="va">delay</span>.<span class="at">connect</span>(filter)</a>
+<a class="sourceLine" id="cb4-22" data-line-number="22">  <span class="va">filter</span>.<span class="at">connect</span>(gain)</a>
+<a class="sourceLine" id="cb4-23" data-line-number="23">  <span class="va">gain</span>.<span class="at">connect</span>(delay)</a>
+<a class="sourceLine" id="cb4-24" data-line-number="24"></a>
+<a class="sourceLine" id="cb4-25" data-line-number="25">  <span class="cf">return</span> <span class="op">{</span> input<span class="op">,</span> output<span class="op">,</span> delay<span class="op">,</span> filter<span class="op">,</span> gain <span class="op">}</span></a>
+<a class="sourceLine" id="cb4-26" data-line-number="26"><span class="op">}</span></a>
+<a class="sourceLine" id="cb4-27" data-line-number="27"></a>
+<a class="sourceLine" id="cb4-28" data-line-number="28"><span class="kw">var</span> bufferNoiseBurst <span class="op">=</span> <span class="at">renderNoiseBurst</span>(ctx<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="va">ctx</span>.<span class="at">sampleRate</span> / <span class="dv">100</span>)</a>
+<a class="sourceLine" id="cb4-29" data-line-number="29"><span class="kw">var</span> ksFilter <span class="op">=</span> <span class="at">createKarplusStrongFilter</span>(ctx<span class="op">,</span> <span class="dv">220</span><span class="op">,</span> <span class="dv">2000</span>)</a>
+<a class="sourceLine" id="cb4-30" data-line-number="30"></a>
+<a class="sourceLine" id="cb4-31" data-line-number="31">source <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createBufferSource</span>()</a>
+<a class="sourceLine" id="cb4-32" data-line-number="32"><span class="va">source</span>.<span class="at">buffer</span> <span class="op">=</span> bufferNoiseBurst</a>
+<a class="sourceLine" id="cb4-33" data-line-number="33"><span class="va">source</span>.<span class="at">connect</span>(<span class="va">ksFilter</span>.<span class="at">input</span>)</a>
+<a class="sourceLine" id="cb4-34" data-line-number="34"><span class="va">ksFilter</span>.<span class="va">output</span>.<span class="at">connect</span>(<span class="va">ctx</span>.<span class="at">destination</span>)</a>
+<a class="sourceLine" id="cb4-35" data-line-number="35"><span class="va">source</span>.<span class="at">start</span>()</a></code></pre></div>
+<p><code>delayTime = 1 / pitch</code> とするとピッチがあわないことがあります。原因は分かりませんがフィードバックのどこかでディレイが増えたり減ったりしているようです。この文章を書いた環境では <code>delayTime = 1 / pitch + 60 / 44100</code> とすることで大体ピッチが合いました。</p>
+<p>Karplus-Strongのデモです。Firefox 62.0.3 では発散するのでPlayしないでください。Panicボタンを押すと音が止まります。</p>
+<div id="divKarplusStrong">
+
+</div>
+<h2 id="リバーブ">リバーブ</h2>
+<p>適当にディレイをたくさん並べるとリバーブになります。ここでは<a href="https://ccrma.stanford.edu/~jos/pasp/Freeverb.html">Freeverb</a>を実装します。</p>
+<p>リバーブ全体のルーティングです。ここではチャンネル毎に別のFreeverbを用意しています。</p>
+<figure>
+<img src="04_freeverb_stereo.svg" alt="Image of Stereo Freeverb routing graph." style="width: 600px; padding-bottom: 12px;"/>
+</figure>
+<p>Freeverbのルーティングです。</p>
+<figure>
+<img src="04_freeverb.svg" alt="Image of Freeverb routing graph." style="width: 700px; padding-bottom: 12px;"/>
+</figure>
+<p>LBCF (Lowpass-feedBack-Comb-Filter) のルーティングです。</p>
+<figure>
+<img src="04_lbcf.svg" alt="Image of Lowpass-feedBack-Comb-Filter routing graph." style="width: 480px; padding-bottom: 12px;"/>
+</figure>
+<p>Allpass のルーティングです。</p>
+<figure>
+<img src="04_allpass.svg" alt="Image of Allpass routing graph." style="width: 320px; padding-bottom: 12px;"/>
+</figure>
+<p>コードです。</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode javascript"><code class="sourceCode javascript"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="co">// Lowpass-feedBack-Comb-Filter</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="kw">function</span> <span class="at">createLBCF</span>(ctx<span class="op">,</span> time<span class="op">,</span> feedback<span class="op">,</span> frequency<span class="op">,</span> Q) <span class="op">{</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">  <span class="co">// 念のために1サンプル余分にバッファを確保する。</span></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">  <span class="kw">var</span> delay <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createDelay</span>(time <span class="op">+</span> <span class="fl">1.5</span> / <span class="va">ctx</span>.<span class="at">sampleRate</span>)</a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">  <span class="va">delay</span>.<span class="va">delayTime</span>.<span class="at">value</span> <span class="op">=</span> time</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">  <span class="kw">var</span> filter <span class="op">=</span> <span class="at">createBiquadFilter</span>(ctx<span class="op">,</span> <span class="st">&quot;lowpass&quot;</span><span class="op">,</span> frequency<span class="op">,</span> Q<span class="op">,</span> <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">  <span class="kw">var</span> gain <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> feedback)</a>
+<a class="sourceLine" id="cb5-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb5-9" data-line-number="9">  <span class="va">delay</span>.<span class="at">connect</span>(filter)</a>
+<a class="sourceLine" id="cb5-10" data-line-number="10">  <span class="va">filter</span>.<span class="at">connect</span>(gain)</a>
+<a class="sourceLine" id="cb5-11" data-line-number="11">  <span class="va">gain</span>.<span class="at">connect</span>(delay)</a>
+<a class="sourceLine" id="cb5-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb5-13" data-line-number="13">  <span class="cf">return</span> <span class="op">{</span> delay<span class="op">,</span> filter<span class="op">,</span> gain <span class="op">}</span></a>
+<a class="sourceLine" id="cb5-14" data-line-number="14"><span class="op">}</span></a>
+<a class="sourceLine" id="cb5-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb5-16" data-line-number="16"><span class="kw">function</span> <span class="at">createAllpass</span>(ctx<span class="op">,</span> time<span class="op">,</span> gain) <span class="op">{</span></a>
+<a class="sourceLine" id="cb5-17" data-line-number="17">  <span class="kw">var</span> delay <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createDelay</span>(time <span class="op">+</span> <span class="fl">1.5</span> / <span class="va">ctx</span>.<span class="at">sampleRate</span>)</a>
+<a class="sourceLine" id="cb5-18" data-line-number="18">  <span class="va">delay</span>.<span class="va">delayTime</span>.<span class="at">value</span> <span class="op">=</span> time</a>
+<a class="sourceLine" id="cb5-19" data-line-number="19">  <span class="kw">var</span> gainForward <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> gain)</a>
+<a class="sourceLine" id="cb5-20" data-line-number="20">  <span class="kw">var</span> gainBack <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> gain)</a>
+<a class="sourceLine" id="cb5-21" data-line-number="21">  <span class="kw">var</span> highpass <span class="op">=</span> <span class="at">createBiquadFilter</span>(ctx<span class="op">,</span> <span class="st">&quot;highpass&quot;</span><span class="op">,</span> <span class="dv">20</span><span class="op">,</span> <span class="dv">-6</span><span class="op">,</span> <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb5-22" data-line-number="22"></a>
+<a class="sourceLine" id="cb5-23" data-line-number="23">  <span class="va">delay</span>.<span class="at">connect</span>(highpass)</a>
+<a class="sourceLine" id="cb5-24" data-line-number="24">  <span class="va">gainForward</span>.<span class="at">connect</span>(highpass)</a>
+<a class="sourceLine" id="cb5-25" data-line-number="25">  <span class="va">highpass</span>.<span class="at">connect</span>(gainBack)</a>
+<a class="sourceLine" id="cb5-26" data-line-number="26">  <span class="va">gainBack</span>.<span class="at">connect</span>(delay)</a>
+<a class="sourceLine" id="cb5-27" data-line-number="27">  <span class="va">gainBack</span>.<span class="at">connect</span>(gainForward)</a>
+<a class="sourceLine" id="cb5-28" data-line-number="28"></a>
+<a class="sourceLine" id="cb5-29" data-line-number="29">  <span class="cf">return</span> <span class="op">{</span> delay<span class="op">,</span> gainForward<span class="op">,</span> gainBack<span class="op">,</span> highpass <span class="op">}</span></a>
+<a class="sourceLine" id="cb5-30" data-line-number="30"><span class="op">}</span></a>
+<a class="sourceLine" id="cb5-31" data-line-number="31"></a>
+<a class="sourceLine" id="cb5-32" data-line-number="32"><span class="kw">function</span> <span class="at">createFreeverb</span>(ctx<span class="op">,</span> channel) <span class="op">{</span></a>
+<a class="sourceLine" id="cb5-33" data-line-number="33">  <span class="kw">const</span> numLbcf <span class="op">=</span> <span class="dv">8</span></a>
+<a class="sourceLine" id="cb5-34" data-line-number="34">  <span class="kw">const</span> numAllpass <span class="op">=</span> <span class="dv">4</span></a>
+<a class="sourceLine" id="cb5-35" data-line-number="35"></a>
+<a class="sourceLine" id="cb5-36" data-line-number="36">  <span class="kw">var</span> apGain <span class="op">=</span> <span class="fl">0.5</span></a>
+<a class="sourceLine" id="cb5-37" data-line-number="37">  <span class="kw">var</span> randTimeAP <span class="op">=</span> () <span class="op">=&gt;</span> <span class="fl">0.012</span> <span class="op">*</span> <span class="va">Math</span>.<span class="at">random</span>() <span class="op">+</span> <span class="fl">0.004</span></a>
+<a class="sourceLine" id="cb5-38" data-line-number="38">  <span class="kw">var</span> randTimeLBCF <span class="op">=</span> () <span class="op">=&gt;</span> <span class="fl">0.08</span> <span class="op">*</span> <span class="va">Math</span>.<span class="at">random</span>() <span class="op">+</span> <span class="fl">0.02</span></a>
+<a class="sourceLine" id="cb5-39" data-line-number="39">  <span class="kw">var</span> randFreqLBCF <span class="op">=</span> () <span class="op">=&gt;</span> <span class="dv">400</span> <span class="op">*</span> <span class="va">Math</span>.<span class="at">pow</span>(<span class="dv">2</span><span class="op">,</span> <span class="dv">5</span> <span class="op">*</span> <span class="va">Math</span>.<span class="at">random</span>())</a>
+<a class="sourceLine" id="cb5-40" data-line-number="40"></a>
+<a class="sourceLine" id="cb5-41" data-line-number="41">  <span class="kw">var</span> reverb <span class="op">=</span> <span class="kw">new</span> <span class="at">Array</span>(channel)</a>
+<a class="sourceLine" id="cb5-42" data-line-number="42">  <span class="cf">for</span> (<span class="kw">var</span> ch <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> ch <span class="op">&lt;</span> <span class="va">reverb</span>.<span class="at">length</span><span class="op">;</span> <span class="op">++</span>ch) <span class="op">{</span></a>
+<a class="sourceLine" id="cb5-43" data-line-number="43">    <span class="kw">var</span> inputGain <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> <span class="dv">1</span> / <span class="dv">16</span>)</a>
+<a class="sourceLine" id="cb5-44" data-line-number="44">    <span class="kw">var</span> outputGain <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb5-45" data-line-number="45"></a>
+<a class="sourceLine" id="cb5-46" data-line-number="46">    <span class="kw">var</span> allpass <span class="op">=</span> <span class="kw">new</span> <span class="at">Array</span>(numAllpass)</a>
+<a class="sourceLine" id="cb5-47" data-line-number="47">    allpass[<span class="dv">0</span>] <span class="op">=</span> <span class="at">createAllpass</span>(ctx<span class="op">,</span> <span class="at">randTimeAP</span>()<span class="op">,</span> apGain)</a>
+<a class="sourceLine" id="cb5-48" data-line-number="48">    <span class="cf">for</span> (<span class="kw">var</span> i <span class="op">=</span> <span class="dv">1</span><span class="op">;</span> i <span class="op">&lt;</span> <span class="va">allpass</span>.<span class="at">length</span><span class="op">;</span> <span class="op">++</span>i) <span class="op">{</span></a>
+<a class="sourceLine" id="cb5-49" data-line-number="49">      allpass[i] <span class="op">=</span> <span class="at">createAllpass</span>(ctx<span class="op">,</span> <span class="at">randTimeAP</span>()<span class="op">,</span> apGain)</a>
+<a class="sourceLine" id="cb5-50" data-line-number="50">      allpass[i <span class="op">-</span> <span class="dv">1</span>].<span class="va">highpass</span>.<span class="at">connect</span>(allpass[i].<span class="at">delay</span>)</a>
+<a class="sourceLine" id="cb5-51" data-line-number="51">      allpass[i <span class="op">-</span> <span class="dv">1</span>].<span class="va">highpass</span>.<span class="at">connect</span>(allpass[i].<span class="at">gainForward</span>)</a>
+<a class="sourceLine" id="cb5-52" data-line-number="52">    <span class="op">}</span></a>
+<a class="sourceLine" id="cb5-53" data-line-number="53">    allpass[<span class="va">allpass</span>.<span class="at">length</span> <span class="op">-</span> <span class="dv">1</span>].<span class="va">delay</span>.<span class="at">connect</span>(outputGain)</a>
+<a class="sourceLine" id="cb5-54" data-line-number="54">    allpass[<span class="va">allpass</span>.<span class="at">length</span> <span class="op">-</span> <span class="dv">1</span>].<span class="va">gainForward</span>.<span class="at">connect</span>(outputGain)</a>
+<a class="sourceLine" id="cb5-55" data-line-number="55"></a>
+<a class="sourceLine" id="cb5-56" data-line-number="56">    <span class="kw">var</span> lbcf <span class="op">=</span> <span class="kw">new</span> <span class="at">Array</span>(numLbcf)</a>
+<a class="sourceLine" id="cb5-57" data-line-number="57">    <span class="cf">for</span> (<span class="kw">var</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> <span class="va">lbcf</span>.<span class="at">length</span><span class="op">;</span> <span class="op">++</span>i) <span class="op">{</span></a>
+<a class="sourceLine" id="cb5-58" data-line-number="58">      lbcf[i] <span class="op">=</span> <span class="at">createLBCF</span>(ctx<span class="op">,</span> <span class="at">randTimeLBCF</span>()<span class="op">,</span> <span class="fl">0.85</span><span class="op">,</span> <span class="at">randFreqLBCF</span>()<span class="op">,</span> <span class="dv">-6</span>)</a>
+<a class="sourceLine" id="cb5-59" data-line-number="59">      <span class="va">inputGain</span>.<span class="at">connect</span>(lbcf[i].<span class="at">delay</span>)</a>
+<a class="sourceLine" id="cb5-60" data-line-number="60">      <span class="va">inputGain</span>.<span class="at">connect</span>(allpass[<span class="dv">0</span>].<span class="at">delay</span>)</a>
+<a class="sourceLine" id="cb5-61" data-line-number="61">      <span class="va">inputGain</span>.<span class="at">connect</span>(allpass[<span class="dv">0</span>].<span class="at">gainForward</span>)</a>
+<a class="sourceLine" id="cb5-62" data-line-number="62">      lbcf[i].<span class="va">delay</span>.<span class="at">connect</span>(allpass[<span class="dv">0</span>].<span class="at">delay</span>)</a>
+<a class="sourceLine" id="cb5-63" data-line-number="63">      lbcf[i].<span class="va">delay</span>.<span class="at">connect</span>(allpass[<span class="dv">0</span>].<span class="at">gainForward</span>)</a>
+<a class="sourceLine" id="cb5-64" data-line-number="64">    <span class="op">}</span></a>
+<a class="sourceLine" id="cb5-65" data-line-number="65"></a>
+<a class="sourceLine" id="cb5-66" data-line-number="66">    reverb[ch] <span class="op">=</span> <span class="op">{</span> inputGain<span class="op">,</span> outputGain<span class="op">,</span> allpass<span class="op">,</span> lbcf <span class="op">}</span></a>
+<a class="sourceLine" id="cb5-67" data-line-number="67">  <span class="op">}</span></a>
+<a class="sourceLine" id="cb5-68" data-line-number="68"></a>
+<a class="sourceLine" id="cb5-69" data-line-number="69">  <span class="kw">var</span> input <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createChannelSplitter</span>(<span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb5-70" data-line-number="70">  <span class="va">input</span>.<span class="at">connect</span>(reverb[<span class="dv">0</span>].<span class="at">inputGain</span><span class="op">,</span> <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb5-71" data-line-number="71">  <span class="va">input</span>.<span class="at">connect</span>(reverb[<span class="dv">1</span>].<span class="at">inputGain</span><span class="op">,</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb5-72" data-line-number="72"></a>
+<a class="sourceLine" id="cb5-73" data-line-number="73">  <span class="kw">var</span> merger <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createChannelMerger</span>(<span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb5-74" data-line-number="74">  reverb[<span class="dv">0</span>].<span class="va">outputGain</span>.<span class="at">connect</span>(merger<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb5-75" data-line-number="75">  reverb[<span class="dv">1</span>].<span class="va">outputGain</span>.<span class="at">connect</span>(merger<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb5-76" data-line-number="76"></a>
+<a class="sourceLine" id="cb5-77" data-line-number="77">  <span class="kw">var</span> output <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> <span class="fl">0.5</span>)</a>
+<a class="sourceLine" id="cb5-78" data-line-number="78">  <span class="va">merger</span>.<span class="at">connect</span>(output)</a>
+<a class="sourceLine" id="cb5-79" data-line-number="79"></a>
+<a class="sourceLine" id="cb5-80" data-line-number="80">  <span class="cf">return</span> <span class="op">{</span> input<span class="op">,</span> output<span class="op">,</span> reverb <span class="op">}</span></a>
+<a class="sourceLine" id="cb5-81" data-line-number="81"><span class="op">}</span></a>
+<a class="sourceLine" id="cb5-82" data-line-number="82"></a>
+<a class="sourceLine" id="cb5-83" data-line-number="83"><span class="kw">var</span> bufferPing <span class="op">=</span> <span class="at">renderPing</span>(ctx<span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="va">Math</span>.<span class="at">floor</span>(<span class="va">ctx</span>.<span class="at">sampleRate</span> / <span class="dv">5</span>))</a>
+<a class="sourceLine" id="cb5-84" data-line-number="84"><span class="kw">var</span> gain <span class="op">=</span> <span class="at">createGain</span>(ctx<span class="op">,</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb5-85" data-line-number="85"><span class="kw">var</span> freeverb <span class="op">=</span> <span class="at">createFreeverb</span>(ctx<span class="op">,</span> <span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb5-86" data-line-number="86"></a>
+<a class="sourceLine" id="cb5-87" data-line-number="87">source <span class="op">=</span> <span class="va">ctx</span>.<span class="at">createBufferSource</span>()</a>
+<a class="sourceLine" id="cb5-88" data-line-number="88"><span class="va">source</span>.<span class="at">buffer</span> <span class="op">=</span> bufferPing</a>
+<a class="sourceLine" id="cb5-89" data-line-number="89"><span class="va">source</span>.<span class="at">connect</span>(<span class="va">freeverb</span>.<span class="at">input</span>)</a>
+<a class="sourceLine" id="cb5-90" data-line-number="90"><span class="va">source</span>.<span class="at">connect</span>(<span class="va">freeverb</span>.<span class="at">output</span>)</a>
+<a class="sourceLine" id="cb5-91" data-line-number="91"><span class="va">freeverb</span>.<span class="va">output</span>.<span class="at">connect</span>(<span class="va">ctx</span>.<span class="at">destination</span>)</a>
+<a class="sourceLine" id="cb5-92" data-line-number="92"><span class="va">source</span>.<span class="at">start</span>()</a></code></pre></div>
+<p>Freeverbのデモです。Firefox 62.0.3 では発散するのでPlayしないでください。Panicボタンを押すと音が止まります。Panicボタンを押すたびにFreeverbのパラメータがランダムに変わります。</p>
+<div id="divFreeverb">
+
+</div>
+<script type="module" src="04_delay.js"></script>
+
+
+  <footer>
+    <a href="index.html">トップに戻る</a>
+  </footer>
+</body>
+
+</html>
