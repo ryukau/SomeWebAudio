@@ -40,7 +40,7 @@ var ctx = new AudioContext()
 ```
 
 ## ウェイブシェイパ
-ウェイブシェイパは音を歪ませるときに使えます。
+`WaveShaperNode` は音を歪ませるときに使えます。
 
 ### 半波整流と全波整流
 [半波整流](https://ja.wikipedia.org/wiki/%E6%95%B4%E6%B5%81%E5%99%A8#%E5%8D%98%E7%9B%B8%E5%8D%8A%E6%B3%A2%E6%95%B4%E6%B5%81)の入出力特性です。横軸が入力の大きさ、縦軸が対応する出力の大きさです。
@@ -153,7 +153,7 @@ playWaveShaper(ctx, bufferPing, shaperSomeCurve)
 <div id="divSomeShaper"></div>
 
 ## コンプレッサ
-[仕様](https://webaudio.github.io/web-audio-api/#DynamicsCompressorOptions-processing)で気になった部分をリストします。
+`DynamicsCompressorNode` の[仕様](https://webaudio.github.io/web-audio-api/#DynamicsCompressorOptions-processing)で気になった部分をリストします。
 
 1. Fixed look-aheadなのでコンプレッサを通すと一定の遅れが加わる。
 2. メイクアップゲインは ratio, knee, threshold の値で変わる。

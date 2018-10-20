@@ -146,7 +146,7 @@
 <a class="sourceLine" id="cb1-31" data-line-number="31"></a>
 <a class="sourceLine" id="cb1-32" data-line-number="32"><span class="kw">var</span> ctx <span class="op">=</span> <span class="kw">new</span> <span class="at">AudioContext</span>()</a></code></pre></div>
 <h2 id="ウェイブシェイパ">ウェイブシェイパ</h2>
-<p>ウェイブシェイパは音を歪ませるときに使えます。</p>
+<p><code>WaveShaperNode</code> は音を歪ませるときに使えます。</p>
 <h3 id="半波整流と全波整流">半波整流と全波整流</h3>
 <p><a href="https://ja.wikipedia.org/wiki/%E6%95%B4%E6%B5%81%E5%99%A8#%E5%8D%98%E7%9B%B8%E5%8D%8A%E6%B3%A2%E6%95%B4%E6%B5%81">半波整流</a>の入出力特性です。横軸が入力の大きさ、縦軸が対応する出力の大きさです。</p>
 <figure>
@@ -244,7 +244,7 @@
 
 </div>
 <h2 id="コンプレッサ">コンプレッサ</h2>
-<p><a href="https://webaudio.github.io/web-audio-api/#DynamicsCompressorOptions-processing">仕様</a>で気になった部分をリストします。</p>
+<p><code>DynamicsCompressorNode</code> の<a href="https://webaudio.github.io/web-audio-api/#DynamicsCompressorOptions-processing">仕様</a>で気になった部分をリストします。</p>
 <ol type="1">
 <li>Fixed look-aheadなのでコンプレッサを通すと一定の遅れが加わる。</li>
 <li>メイクアップゲインは ratio, knee, threshold の値で変わる。</li>
